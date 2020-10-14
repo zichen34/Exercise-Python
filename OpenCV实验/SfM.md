@@ -1,12 +1,58 @@
 2020-10-7
 
-《Mastering OpenCV 4 third edition》唐灿 译 ISBN：9787111645771 第二章
+《Mastering OpenCV 4 - third edition》唐灿 译 ISBN：9787111645771 第二章
 
 # 使用SfM模块从运动中恢复结构
 
 SfM：是恢复场景中相机的位置和稀疏几何的过程。
 
-OpenCV 3.0+ 增加了一个sfm模块，有助于利用多张图像来执行端到端的SfM处理。
+> [sfm 流水线：](https://jiajiewu.gitee.io/post/tech/slam-sfm/sfm-intro/)
+>
+> 1. 对每张2维图片检测特征点(feature points)：[SIFT](https://blog.csdn.net/sinat_36811967/article/details/84136358)，AKAZE
+>
+> 2. 对每张图片中的特征点进行匹配：[BFM，FLANN](https://www.cnblogs.com/Jessica-jie/p/8622449.html)
+>
+> 3. 只保留满足对极约束的匹配，用多个点对估计基本矩阵F：[RANSAC](https://www.cnblogs.com/wangguchangqing/p/8214032.html) 
+>
+>    1. 多次迭代以下流程：
+>
+>       * 选8个点
+>
+>       * 用DLT算法计算F
+>       * 记录内点(适应数学模型的数据)的数目 或 记录内点与外点的比值
+>
+>    2. 选取内点最多的对应F 或 设置阈值来丢弃比值达不到条件的匹配
+>
+> 4. 由F算E，特征分解本征矩阵E 得到R，t：SVD分解
+>    $$
+>    (K^{-1}x_L)^T E K^{-1} x_R = x^T_L F x_R =0
+>    $$
+>    E 给出了相机L和相机R 之间真实3D点上会聚的所有点对的极线约束。(需要知道K?)
+>
+> 5. 三角测量求三维点坐标，稀疏点云：MeshLab
+>
+>    1. 直接线性方法：一个3D点在两个2D视图的投影方程，并使之相等：
+>       $$
+>       x_L = P_L W \\
+>       X_R = P_R W \\
+>       其中 P = K[R|t],是投影矩阵
+>       $$
+>       可转换为齐次线性方程组解决（SVD）。获得基线3D重建后，添加更多视图：Point-n-Perspective，成对三维重建，并计算缩放因子
+>
+>    2. stereo depth reconstruction 立体深度重建：找到图像R的极线上的且与图像L中的点最匹配的合适的点。
+>
+>       1. 极线修正为完全水平，进行图像间纯水平变换
+>       2. 视差与深度成反比，描述了三维点在两个图像之间水平移动的距离
+>
+>    3. MVS：利用极线约束一次从多个视图中寻找匹配点
+>
+> 6. 使用[bundle adjustment（BA）](https://jiajiewu.gitee.io/post/tech/slam-sfm/sfm-intro/)最小化重建误差
+>
+> 7. 稠密点云：PMVS
+>
+> 8. mesh -> models
+
+OpenCV 3.0+ 增加了一个**sfm模块**，有助于利用多张图像来执行端到端的SfM处理。
 
 实现：使用SfM模块将场景重建为稀疏点云，并生成相机姿态。之后，使用OpenMVS（MVS）多视图立体视觉库来增加点云的密度，使点云变得更加稠密。
 
