@@ -28,6 +28,8 @@
 
 ## 第二讲 初识SLAM
 
+slam(simultaneous localization and mapping 同步定位和建图)
+
 小萝卜移动机器人，自主移动能力，需要SLAM地图构建，相机SLAM，定位和建图，内外兼修，误差全局优化
 
 两类常用传感器，外部安装需要贴，GPS失效，携带于机器人本体上的传感器受限制小
@@ -144,31 +146,106 @@ $$
 \end{array} \right]
 \left[ \begin{array}{c} a_1 \\ a_2 \\ a_3 \end{array} \right] =
 \left[ \begin{array}{ccc}
-	e_1\verb|'| & e_2\verb|'|  & e_3\verb|'|  
+	e_1^\prime & e_2^\prime  & e_3^\prime  
 \end{array} \right]
-\left[ \begin{array}{c} a_1\verb|'|  \\ a_2\verb|'|  \\ a_3\verb|'|  \end{array} \right]
+\left[ \begin{array}{c} a_1^\prime  \\ a_2^\prime  \\ a_3^\prime  \end{array} \right]
 $$
 左乘 $\left[ \begin{array}{c} e^T_1\\ e^T_2\\ e^T_3 \end{array} \right]$ , 得：
 $$
 \left[ \begin{array}{c} a_1 \\ a_2 \\ a_3 \end{array} \right] =
 \left[ \begin{array}{ccc}
-	e^T_1e_1\verb|'| & e^T_1e_2\verb|'| & e^T_1e_3\verb|'| \\
-	e^T_2e_1\verb|'| & e^T_2e_2\verb|'| & e^T_2e_3\verb|'| \\
-	e^T_3e_1\verb|'| & e^T_3e_2\verb|'| & e^T_3e_3\verb|'| 	
+	e^T_1e_1^\prime & e^T_1e_2^\prime & e^T_1e_3^\prime \\
+	e^T_2e_1^\prime & e^T_2e_2^\prime & e^T_2e_3^\prime \\
+	e^T_3e_1^\prime & e^T_3e_2^\prime & e^T_3e_3^\prime
 \end{array}\right] 
-\left[ \begin{array}{c} a_1 \\ a_2 \\ a_3 \end{array} \right] \triangleq R\vec{a\verb|'|}
+\left[ \begin{array}{c} a_1^\prime \\ a_2^\prime \\ a_3^\prime \end{array} \right] \triangleq R\vec{a^\prime}
 $$
-R 是一个正交矩阵（逆=转置），R的行列式为+1，称为**旋转矩阵**，则旋转矩阵的**集合**就是：$SO(n)= \{ R\in R^{n\times n}|RR^T=I,det(R)=1 \}$ ，n维空间中的旋转，n=3就是三维空间中的旋转
+**R 是一个正交矩阵（逆=转置），R的行列式为+1**，称为**旋转矩阵**，则旋转矩阵的**集合**就是：$SO(n)= \{ R\in R^{n\times n}|RR^T=I,det(R)=1 \}$ ，n维空间中的旋转，n=3就是三维空间中的旋转
 
-旋转矩阵描述了两个坐标的变换关系，比如
+旋转矩阵描述了两个坐标的变换关系（向量没变），比如
 
 * $a_1 = R_{12} a_2$
 * 反之：$a_2 = R_{21} a_1$
 * 于是：$R_{21}=R_{12}^{-1}=R_{12}^T$
 * 进一步，三个坐标系亦有：$a_3=R_{32}a_2=R_{32}R_{21} a1=R_{31}a_1 $
 
-加上平移：$a'=Ra+t$, 两个坐标系的刚体运动可以由R，t完全描述。
+旋转加上平移：$a'=Ra+t$, 两个坐标系的刚体运动可以由R，t 完全描述。
 
 但是如果发生了两次变换：$b=R_1a+t, \ c=R_2b+t_2$
 
 这时：$c = R_2(R_1a+t_1)+t_2$，叠加起来过于复杂
+
+把一次平移和一次旋转合成一个矩阵：
+$$
+\left[ \begin{array}{c} a^\prime \\ 1 \end{array} \right]=
+\left[ \begin{array}{cc} R & t \\ 0^T & 1 \end{array} \right]
+\left[ \begin{array}{c} a \\ 1 \end{array} \right] \triangleq
+T \left[ \begin{array}{c} a \\ 1 \end{array} \right]
+$$
+记 $\tilde{a}=\left[ \begin{array}{c} a \\1 \end{array} \right]$ ，这种用四个数表达三维向量的做法称为**齐次坐标**，引入齐次坐标后，旋转和平移可以放入同一个矩阵，称为变换矩阵。那么多次变换就可以写成：
+$$
+\tilde{b}=T_1 \tilde{a},\tilde{c}=T_2 \tilde{b} \Rightarrow \tilde{c}=T_2 T_1 \tilde{a}
+$$
+特殊欧氏群(special Euclidean Group)：
+$$
+SE(3)=\left\{ T= \left[ \begin{array}{cc} R & t \\ 0^T & 1 \end{array} \right] \in R^{4\times 4}|R \in SO(3),t \in R^3 \right\}
+$$
+反向变换：
+$$
+T^{-1}=\left[ \begin{array}{cc} R^T & -R^Tt\\ 0^T & 1 \end{array} \right]
+$$
+在SLAM中，通常定义世界坐标系$T_W$ 与 机器人坐标系$T_R$ ，一个点的世界坐标为$p_R$，那么满足关系：
+$$
+p_R = T_{RW}p_W
+$$
+在实际编程中，可使用$T_{RW}$ 或 $T_{WR}$ 来描述机器人的位姿。
+
+相机轨迹画的是相机坐标系中心在世界坐标系的坐标
+
+### EIGEN
+
+C++矩阵运算库，运行效率高
+
+ubuntu 安装eigen `sudo apt-get install libeigen3-dev`
+
+只有头文件库：/usr/include/eigen3 没有库文件，不需要链接库，只要把头文件加进来就可以了
+
+eigen 和matlab像，所以东西都是矩阵类型定义的 ，基本数据类型是 Eigen::Matrix
+
+CMakeLists.txt：
+
+```cmake
+cmake_minimum_required( VERSION 2.8 )
+project( useEigen )
+set( CMAKE_BUILD_TYPE "Release" )
+set( CMAKE_Cxx_FLAGS ".03" )
+# 添加Eigen 头文件
+include_directories( "/usr/include/eigen3" )
+
+add_executable( eigenMatrix eigenMatrix.cpp)
+```
+
+eigenMatrix.cpp
+
+```c++
+# include <iostrems>
+using namespace std:
+# include <ctime>
+
+// Eigen 部分
+# include <Eigen/Core>	//提供核心矩阵运算
+# include <Eigen/Dense>	//稠密矩阵的代数运算（逆、特征值等）
+# define MATRIX_SIZE 50
+
+/*****************
+* 本程序演示了Eigen基本类型的使用
+*****************/
+
+int main( int argc, char** argv )
+{
+    // Eigen 中所有向量和矩阵都是Eigen::Matrix，它是一个模板类，它的三个参数为：数据类型，行，列
+    // 声明一个2*3 的float 矩阵
+    Eigen::Matrix<float, 2, 3>matrix_23
+}
+```
+
