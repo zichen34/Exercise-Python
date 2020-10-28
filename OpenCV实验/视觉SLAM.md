@@ -160,7 +160,7 @@ $$
 \end{array}\right] 
 \left[ \begin{array}{c} a_1^\prime \\ a_2^\prime \\ a_3^\prime \end{array} \right] \triangleq R\vec{a^\prime}
 $$
-**R 是一个正交矩阵（逆=转置），R的行列式为+1**，称为**旋转矩阵**，则旋转矩阵的**集合**就是：$SO(n)= \{ R\in R^{n\times n}|RR^T=I,det(R)=1 \}$ ，n维空间中的旋转，n=3就是三维空间中的旋转
+**R 是一个正交矩阵（逆=转置），R的行列式为+1**，称为**旋转矩阵**，则旋转矩阵的**集合**就是**特殊正交群**：$SO(n)= \{ R\in R^{n\times n}|RR^T=I,det(R)=1 \}$ ，n维空间中的旋转，n=3就是三维空间中的旋转
 
 旋转矩阵描述了两个坐标的变换关系（向量没变），比如
 
@@ -186,7 +186,7 @@ $$
 $$
 \tilde{b}=T_1 \tilde{a},\tilde{c}=T_2 \tilde{b} \Rightarrow \tilde{c}=T_2 T_1 \tilde{a}
 $$
-特殊欧氏群(special Euclidean Group)：
+**特殊欧氏群**(special Euclidean Group)：
 $$
 SE(3)=\left\{ T= \left[ \begin{array}{cc} R & t \\ 0^T & 1 \end{array} \right] \in R^{4\times 4}|R \in SO(3),t \in R^3 \right\}
 $$
@@ -249,3 +249,177 @@ int main( int argc, char** argv )
 }
 ```
 
+## 3.3 旋转向量、欧拉角
+
+除了旋转矩阵之外的旋转表示：旋转向量，欧拉角，四元数
+
+旋转可以表示为：绕某一轴旋转多少角度，这个轴称为角轴，或旋转向量，长度为1，
+$$
+w = \Theta n
+$$
+角轴与旋转矩阵不同：
+
+* 旋转矩阵：9个量，有正交性约束和行列式值约束
+* 角轴：三个量，没有约束
+
+注意它们只是表达方式的不同，但表达的东西可以是同一个，角轴也就是第四章要介绍的李代数
+
+转换关系：
+
+ * 轴角转换到旋转矩阵：**罗德里格斯公式**
+   $$
+   R = cos\theta I + (1-cos\theta)n n^T +sin\theta n \verb|^|
+   $$
+
+* 旋转矩阵转轴角
+
+  * 角度：$\theta = arccos(\frac{tr(R)-1}{2})$
+  * 轴：$Rn = n$
+
+**欧拉角**：（对人类直观）
+
+* 将旋转分解为三次不同轴上的转动，
+* 例如：按Z-Y-X 顺序转动
+* 轴可以是定轴或动轴，顺序亦可不同，因此存在许多种定义方式不同的欧拉角
+* 常见的有yaw-pitch-roll（偏航-俯仰-滚转）角等
+  * 绕物体的Z轴旋转，得到偏航角yaw
+  * 绕旋转之后的Y轴旋转，得到俯仰角pitch
+  * 绕旋转之后的X轴旋转，得到滚转角roll
+
+万向锁（Gimbal Lock）：
+
+* ZYX顺序中，若Pitch为正负90度，则第三次旋转和第一次绕同一个轴，使得系统丢失了一个自由度——存在奇异性问题（所以不常用其表达姿态，往往用于人机交互中）
+
+## 3.4 四元数
+
+紧凑但没奇异性的表述方式。
+
+* 四元数是一种扩展的复数
+
+* 回忆：（单位圆上的）复数可以表达**二维平面**的旋转：x乘上一个i，逆时针旋转90度
+
+* 四元数有三个虚部，可以表达**三维空间**中的旋转
+  $$
+  \vec{q} = q_0+q_1i+q_2j+q_3k, \\
+  $$
+  也可写成有实部和虚部组成的向量：
+  $$
+  \vec{q} = [\vec{s}, \vec{v}], 
+  \vec{s} = q_0 \in \R, \vec{v}=[q_1,q_2,q_3]^T\in \R^3
+  $$
+
+* 虚部之间的关系：
+  $$
+  \left\{
+  \begin{array}{c}
+  i^2=j^2=k^2=-1	\\
+  ij=k, \ ji=-k	\\
+  jk=i, \ kj=-i	\\
+  ki=j, \ ik=-j
+  \end{array}
+  \right.
+  $$
+  自己和自己的运算像复数，自己和别人的运算像三维空间里的叉乘
+
+* 和复数一样，单位四元数可以表达三维空间的一次旋转
+
+* 四元数的一些运算和性质：
+
+  * 加减法
+    $$
+    q_a\pm q_b = [s_a \pm s_b, v_a \pm v_b]
+    $$
+
+  * 乘法
+    $$
+    \begin{align}
+    q_aq_b & =s_as_b-x_ax_b-y_ay_b-z_az_b\\
+    		&+(s_a x_b+x_a s_b+y_a z_b-z_a y_b)i \\
+    		&+(s_a y_b-x_a z_b+y_a s_b+z_a x_b)j\\
+    		&+(s_a z_b+x_a y_b-y_a x_a+z_a s_b)k
+    \end{align}
+    $$
+
+  * 乘方
+    $$
+    q_aq_b = [s_as_b - v_a^Tv_b,\ s_av_b - s_bv_a + v_a\times v_b]
+    $$
+
+  * 共轭 
+
+  * 模长
+
+  * 逆
+
+  * 数乘
+
+  * 点乘
+
+四元数表达三维空间旋转
+
+* 四元数和角轴的关系
+
+  * 角轴到四元数
+    $$
+    q = [cos\frac{\theta}{2},\ n_xsin\frac{\theta}{2},\ n_ysin\frac{\theta}{2},\ n_zsin\frac{\theta}{2} ]^T
+    $$
+
+  * 四元数到角轴
+    $$
+    \left\{
+    \begin{array}{c}
+    \theta & = & 2 arccosq_0\\
+    [n_z,n_y, n_z]^T & = & [q_1,q_2,q_3]^T/sin\frac{\theta}{2}
+    \end{array}
+    \right.
+    $$
+
+  * 类似可知四元数亦可可转换为旋转矩阵、欧拉角
+
+用四元数旋转一个空间点：
+
+* 设点 p 经过一次以 q 表示的旋转后，得到了 p' ，它们关系如何表示？
+
+  1. 设p 的坐标(x,y,z) 用四元数表示（**虚四元数**）：$\vec{p}=[0,x,y,z] = [0,\vec{v}]$
+
+  2. 旋转之后的关系为：
+     $$
+     p^\prime = qpq^{-1}
+     $$
+     可以验证这也是四元数
+
+* 四元数相比于角轴、欧拉角的优势：**紧凑、无奇异性**
+
+### EIGEN 几何模块
+
+## 第四讲 李群与李代数
+
+对三维世界中刚体运动的估计和优化。
+
+旋转矩阵自身带有约束（正交且行列式为1，非线性约束）。作为优化变量时，会引入额外的约束，使优化变得困难。李代数上可以变成无约束优化
+
+## 4.1 李群李代数基础
+
+三维旋转矩阵构成了特殊正交群
+$$
+SO(n)= \{ R\in R^{n\times n}|RR^T=I,det(R)=1 \}
+$$
+
+
+三维变换矩阵构成了特殊欧氏群
+$$
+SE(3)=\left\{ T= \left[ \begin{array}{cc} R & t \\ 0^T & 1 \end{array} \right] \in R^{4\times 4}|R \in SO(3),t \in R^3 \right\}
+$$
+群：是一种集合加上一种运算代数结构。
+
+记集合为A，运算为·，那么当运算满足以下性质时，称（A，·）成群：
+
+1. 封闭性：$\forall a_1,a_2 \in A,\quad a_1\cdot a_2 \in A$
+
+2. 结合律：$\forall a_1,a_2,a_3 \in A, \quad (a_1·a_2)·a_3 = a_1·（a_2·a_3）$
+
+3. 幺元：$\exists a_0 \in A,\quad s.t. \quad \forall a \in A, \quad a_0·a=a·a_0=a.$
+
+4. 逆：$\forall a \in A, \quad \exists a^{-1} \in A, \quad s.t. \quad a·a^{-1} = a_0$
+
+   封结幺逆（“凤姐咬你”）
