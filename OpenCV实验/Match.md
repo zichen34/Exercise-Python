@@ -4,13 +4,15 @@ from https://www.cnblogs.com/Jessica-jie/p/8622449.html
 
 ### 1. Brute-force matcher (cv::BFMatcher)
 
-* 暴力方法找到点集1中每个descriptor 在点集中距离最近的descriptor；找寻到的距离最小就认为匹配。
+* 暴力方法找到点集1中每个descriptor 在点集2中距离最近的descriptor；找寻到的距离最小就认为匹配。
 * 浮点描述子-欧氏距离；二进制描述符-汉明距离。
 * 详细描述：**在第一幅图像中选取一个关键点然后依次与第二幅图像的每个关键点进行（描述符）距离测试，最后返回距离最近的关键点**
 
 `cv::BFMatcher(int normType=NORM_L2, bool crossCheck=false)`
 
-1. **normType**: 它是用来**指定要使用的距离测试类型**, 默认值为**cv2.Norm_L2**,这很适合SIFT和SURF等（c2.NORM_L1也可）。对于使用二进制描述符的ORB、BRIEF和BRISK算法等，要使用**cv2.NORM_HAMMING**，这样就会返回两个测试对象之间的汉明距离。如果ORB算法的参数设置为WTA_K==3或4，normType就应该设置成**cv2.NORM_HAMMING2**。
+1. **normType**: 它是用来**指定要使用的距离测试类型**, 默认值为**cv2.Norm_L2**,这很适合SIFT和SURF等（c2.NORM_L1也可）。
+   对于使用二进制描述符的ORB、BRIEF和BRISK算法等，要使用**cv2.NORM_HAMMING**，这样就会返回两个测试对象之间的汉明距离。
+   如果ORB算法的参数设置为WTA_K==3或4，normType就应该设置成**cv2.NORM_HAMMING2**。
 
 2. **crossCheck**：默认值为False。如果设置为True，匹配条件就会**更加严格**，只有到A中的第i个特征点与B中的第j个特征点距离最近，并且B中的第j个特征点到A中的第i个特征点也是最近时才会返回最佳匹配(i,j)，即这两个特征点要互相匹配才行。
 

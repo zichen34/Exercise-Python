@@ -97,9 +97,9 @@ $$
 
 向量的运算由坐标运算来表达
 
-加减法：$a\pm b = \Sigma_{i}(a_i \pm b_i)$
+加减法：$a\pm b = \sum\limits_{i}(a_i \pm b_i)$
 
-内积：$ a\cdot d = a^T b = \Sigma_{i=1}^3a_ib_i=|\vec{a}||\vec{b}|cos(a,b)$
+内积：$ a\cdot d = a^T b = \sum\limits_{i=1}^3a_ib_i=|\vec{a}||\vec{b}|cos(a,b)$
 
 外积:
 $$
@@ -487,21 +487,20 @@ $$
   反对称符号：
   $$
   \begin{align*}
-  & a\hat{} = A = 
+  & a^{\wedge} = A = 
   \left[
   \begin{array}{ccc} 0 & -a3 & a_2 \\
   a_3 & 0 & -a_1 \\
   -a_2 & a_1 & 0\\
   \end{array}
   \right],\\
-  & A\check{}= a
+  & A^{\vee}= a
   \end{align*}
   $$
   
-
 * 两侧右乘R(t)，得
   $$
-  \dot{R(t)} = \phi(t)\hat{} R(t)
+  \dot{R(t)} = \phi(t)^{\wedge} R(t)
   $$
 
 * 可以看到，对R求导后，左侧多出一个 $\phi(t)\hat{}$
@@ -512,7 +511,7 @@ $$
   $$
   \begin{align}
   R(t) & \approx R(t_0)+\dot{R(t_0)}(t-t_0)\\
-  & = I+\phi(t_0)\hat{}(t)
+  & = I+\phi(t_0)^{\wedge}(t)
   \end{align}
   $$
 
@@ -558,13 +557,13 @@ $$
 
 * **旋转群李代数** so(3): 
   $$
-  so(3)=\{\phi \in \R^3, \Phi=\phi\hat{} \in \R^{3\times 3} \}
+  so(3)=\{\phi \in \R^3, \Phi=\phi^{\wedge} \in \R^{3\times 3} \}
   $$
   
 
   其中：$\Phi = \phi\hat{}=\left[\begin{array}{ccc} 0 & -\phi_3 & \phi_2 \\ \phi_3 & 0 & -\phi_1 \\ -\phi_2 & \phi_1 & 0 \end{array}\right] \in \R^{3 \times 3}$ 
 
-  **李括号**：$[\phi_1, \phi_2] = (\Phi_1\Phi_2 - \Phi_2\Phi_1)\check{} $
+  **李括号**：$[\phi_1, \phi_2] = (\Phi_1\Phi_2 - \Phi_2\Phi_1)^{\vee} $
 
   
 
@@ -580,7 +579,7 @@ $$
 
   上尖尖^ 不再是反对称矩阵，但仍保留记法。
 
-  李括号：$[ \xi_1,\xi_2] = (\xi_1\hat{}\xi_2\hat{} - \xi_2\hat{} \xi_1\hat{})\check{}$
+  李括号：$[ \xi_1,\xi_2] = (\xi_1^{\wedge}\xi_2^{\wedge} - \xi_2^{\wedge} \xi_1^{\wedge})^{\vee}$
 
 * 把李代数理解成向量形式或矩阵形式都是可以的。向量形式更加自然一些。
 
@@ -588,7 +587,7 @@ $$
 
 指数映射反应了从李代数到李群的对应关系：
 $$
-R = exp(\phi\hat{})
+R = exp(\phi^{\wedge})
 $$
 但是 $\phi\hat{}$是一个矩阵，对于矩阵，如何定义求指数运算？ —— Taylor 展开：指数展开等于级数求和
 $$
@@ -617,7 +616,7 @@ $$
 
 * 反之，给定旋转矩阵时，对数映射亦能求李代数：
   $$
-  \phi = ln(R)\check{} = (\Sigma_{n=0}^\infin \frac{(-1)^n}{n+1} (R-I)^{n+1})\check{}
+  \phi = ln(R)\check{} = (\sum_{n=0}^\infin \frac{(-1)^n}{n+1} (R-I)^{n+1})\check{}
   $$
 
 * 但实际中没必要这样求，在旋转向量小节已经介绍了矩阵到向量的转换关系：
@@ -632,7 +631,7 @@ $$
 $$
 \begin{align}
 exp(\xi\hat{}) &= \left[ \begin{array}{cc}
-\Sigma_{n=0}^\infin \frac{1}{n!}(\phi\hat{})^n & \Sigma_{n=0}^\infin \frac{1}{(n+1)!}(\phi\hat{})^n\rho \\
+\sum\limits_{n=0}^\infin \frac{1}{n!}(\phi\hat{})^n & \sum\limits_{n=0}^\infin \frac{1}{(n+1)!}(\phi\hat{})^n\rho \\
 0^T	& 1 \end{array} \right]\\
 
 & \triangleq \left[ \begin{array}{cc}
@@ -728,27 +727,49 @@ $$
 
 $$
 \begin{array}{cc}
-\frac{\partial(exp(\phi\hat{})p)}{\partial\phi} &=& \lim_{\delta\phi \to 0} \frac{exp((\phi+\delta\phi)\hat{})p-exp(\phi\hat{})p}{\delta\phi} \\
+\frac{\partial(exp(\phi\hat{})p)}{\partial\phi} &=& \lim_{\delta\phi \to 0} 
+\frac{exp((\phi+\delta\phi)\hat{})p-exp(\phi\hat{})p}{\delta\phi} \\
+& \text{BCH公式近似写开：}\\
 & = &\lim_{\delta\phi \to 0} \frac{exp((J_l\delta\phi)\hat{})exp(\phi\hat{})p-exp(\phi\hat{})p}{\delta\phi} \\
-& \approx&  \lim_{\delta\phi \to 0} \frac{I+(J_l\delta\phi)\hat{}exp(\phi\hat{})p-exp(\phi\hat{})p}{\delta\phi}\\
+& exp泰勒展开，保留一阶项：\\
+& \approx&  \lim_{\delta\phi \to 0} \frac{(I+(J_l\delta\phi)\hat{})exp(\phi\hat{})p-exp(\phi\hat{})p}{\delta\phi}\\
 & =& \lim_{\delta\phi \to 0} \frac{(J_l\delta\phi)\hat{}exp(\phi\hat{})p}{\delta\phi} \\
+& 反对称符号与叉积符号是一样的，\\&说明可以交换位置：\\
 & = & \lim_{\delta\phi \to 0} \frac{-(exp(\phi\hat{})p)\hat{}J_l\delta\phi}{\delta\phi} \\
 & = & -(Rp)\hat{}J_l
 \end{array}
 $$
 
-结果中含有左乘雅可比，比较复杂，能否避免？
+结果中含有左乘雅可比Jl，比较复杂，能否避免？
 
 扰动模型（左乘）：
 
 * 左乘小量，令其李代数为零：
   $$
   \begin{array}{cc}
-  \frac{\partial(R_p)}{\partial\phi}
+  \frac{\partial(R_p)}{\partial\varphi} &=& \lim_{\varphi \to 0} \frac{exp(\varphi\hat{})exp(\phi\hat{})p-exp(\phi\hat{})p}{\varphi} \\
+  & = & \lim_{\varphi \to 0} \frac{(1+\varphi\hat{})exp(\phi\hat{})p-exp(\phi\hat{})p}{\varphi} \\
+  & = & \lim_{\varphi \to 0} \frac{\varphi\hat{}Rp}{\varphi} \\
+  &=& \lim_{\varphi \to 0} \frac{-(Rp)\hat{}\varphi}{\varphi} \\
+  &=& -(Rp)^\wedge
   
   \end{array}
   $$
   
+* 最终结果没有Jl，更为简洁，更实用。
+
+SE(3)上的扰动模型：
+$$
+\begin{array}{cc}
+\frac{}{}
+\end{array}
+$$
+小结：
+
+* 利用BCH 线性近似，可以推导so(3) 和 se(3) 上的导数和扰动模型
+* 通常情况下，扰动模型形式比较简洁，所以更常用
+
+## 演示：Sophus库
 
 
 
@@ -781,9 +802,28 @@ $$
 
 # 第六讲 非线性优化
 
-本节目标
+本讲目标
 
-Ceres库 和 g2o库：最小二乘的实现
+* 理解最小二乘法的含义和处理方法
+* 理解Gauss-Newton，Levenburg-Marquadt等下降策略
+* 学习Ceres库 和 g2o库的基本使用方法：求解最小二乘
+
+上讲回顾：
+
+* 三维世界中刚体的描述：旋转矩阵、旋转向量、欧拉角、四元数等
+
+* 观测模型：相机投影模型
+
+* $$
+  \left\{
+  \begin{align}
+  x_k &= f(x_{k-1},u_k,w_k)	&\text{运动方程}\\
+  z_{k,j} & = h(y_j,x_k,v_{k,j}) &\text{观测方程}
+  \end{align}
+  \right.
+  $$
+
+* 
 
 在给定模型和具体观测时（已知运动方程和观测方程具体形式），如何对估计进行优化？
 
@@ -792,13 +832,85 @@ Ceres库 和 g2o库：最小二乘的实现
 $$
 \left\{
 \begin{align}
-x_k &= f(x_{k-1},u_k,w_k)	&\text{运动方程}\\
-z_{k,j} & = h(y_j,x_k,v_{k,j}) &\text{观测方程}
+x_k &= f(x_{k-1},u_k)+w_k	&\text{运动方程}\\
+z_{k,j} & = h(y_j,x_k)+v_{k,j} &\text{观测方程}
 \end{align}
 \right.
 $$
 
-$a\hat{}$
+从噪声中估计出状态
 
-$a\check{}$
+xk是6自由度的pose用变换矩阵或李代数的指数来表示：$x_k = T_k = exp(\xi_k\hat{})$
+
+$sz_{k,j} = K exp(\xi\hat{})y_j$ ：z是像素，外参乘坐标点乘内参再除距离就得到像素，
+
+$w_k \sim N(0,R_k)是运动噪声，v_{k,j}\sim N(0,Q_{i,j})是观测噪声$, 
+
+根据方程形式，噪声满足的概率分布分类：
+
+* 如果f，h是线性方程（几个量加和，数乘，组成的线性系统），并且噪声服从高斯分布：线性高斯系统（最简单情况，由卡尔曼滤波做出最优误偏估计）
+* 如果f，h是非线性函数（由几个量乘在一起），非高斯噪声，需要分情况讨论
+
+历史上很长时间用滤波器求解状态估计，假设系统具有马尔可夫性，系统的下一时刻的状态仅依赖上一时刻的状态，可以说，只维护当前的状态，当有新输入进入系统中时，更新当前状态的估计。
+
+但是近年非线性优化已成为主流，我们首先来分析一下如何从概率角度看待此问题。
+
+状态变量（把所有代求量放到一块）
+$$
+x = \{x_1,....,x_N, y_1, ... y_M\} \quad 所有时刻的位姿和路标
+$$
+状态估计等同于求解条件分布，当我知道z 和 u 时求在此条件x的概率分布，就可确定状态。这里z，u也是统称
+
+考虑更简单的情况：只有观测方程时（没有运动方程），只考虑z对x的影响，不考虑u，类似于sfm。其实slam某种程度与其很像，不过slam图像有时间先后
+
+贝叶斯法则：
+$$
+P(x|z) = \frac{P(z|x)P(x)}{P(z)} \propto P(z|x)P(x)
+$$
+P(z|x) 是似然，P(x)是先验，因为P(x|z) 条件分布很难求解(模型难选定，参数难估计)，但可以求：
+
+* **最大后验估计**（maximize a Posterior, MAP) 使得P(x|z)这个**数**最大
+
+  $x*_{MAP} = arg max P(x|z) = arg max P(z|x)P(x)$
+
+* **最大似然估计**（maximize Likelihood Estimation, MLE) ，不知道先验P(x)，只估计似然
+
+  $x*_{MLE}=arg max P(z|x)$
+
+  “在哪种状态下，最容易产生当前的观测”
+
+从最大似然到最小二乘：
+
+* 例：某一次观测 $z_{k,j}=h(y_j,x_k)+v_{k,j}$，由于噪声是高斯的：$v_k \sim N(0,Q_{k,j})$，于是$P(z_{j,k}|x_k,y_j)=N(h(y_j,x_k),Q_{k,j})$ .现在要求x,y的最大似然估计怎么做？
+
+一般的高斯分布：
+$$
+P(x) = \frac{1}{\sqrt{(2\pi)^N det(\Sigma)}}exp(-\frac{1}{2}(x-\mu)^T\Sigma^{-1}(x-\mu))
+$$
+负对数形式：(简化形式，只有第二项与x有关)
+$$
+-ln(P(x))=\frac{1}{2}ln((2\pi)^Ndet(\sum))+\frac{1}{2}(x-\mu)^T\sum^{-1}(x-\mu)
+$$
+原问题的最大化，相当于**负对数最小化**
+
+因此，关于原问题的最大似然：
+$$
+P(z_{j,k}|x_k,y_j)=N(h(y_i,x_k),Q_{k,j})
+$$
+相当于最小化：
+$$
+x^{*} = arg\ min((z_{k,j}-h(x_k,y_j))^TQ^{-1}_{k,j}(z_{K,j}-h(x_k,y_j)))
+$$
+上面就是所谓的最小二乘。
+
+对于原问题，每一个运动方程和观测方程，高斯分布假设，对当前估计值xk求误差，运动误差=估计值减上一时刻推出来的值；观测误差=真实zkj-在当前xk的观测yj的观测量：
+$$
+e_{v,k}=x_k - f(x_{k_1},u_k)  运动误差\\
+e_{y,j,k} = z_{k,j} - h(x_k,y_j)  观测误差
+$$
+最小化误差的二范数：
+$$
+min\ J(x)=\sum_k e_{v,k}^T R_k^{-1}e_{v,k}+\sum_k \sum_j e_{y,k,j}^T Q_{k,j}^{-1} e_{y,k,j}
+$$
+
 
