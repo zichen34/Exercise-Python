@@ -2,7 +2,9 @@
 
 # [视觉SLAM十四讲 高翔](https://www.bilibili.com/video/BV16t411g7FR?from=search&seid=13243194313064828696)
 
-**内容：**
+[toc]
+
+内容：
 
 * 第一部分：数学基础
   * 概述 Linux
@@ -26,7 +28,7 @@
 * 编程：C++、linux，了解语法和基本命令即可
 * 不提供windows环境下的方案
 
-# 第二讲 初识SLAM
+# 第二讲 SLAM系统概述
 
 slam(simultaneous localization and mapping 同步定位和建图)
 
@@ -54,38 +56,222 @@ slam(simultaneous localization and mapping 同步定位和建图)
 
 **建图**：
 
-**SLAM问题的数学描述**
+## 2.3 SLAM问题的数学描述
 
-离散时间：t
+* 离散时间：t，只关心相机采集时刻的位置和地图
+* 机器人自身的位置：$x_1, x_2, ...., x_K $ ，构成轨迹
+* 地图由许多个路标组成的：$y_1, ... y_N $，而每个时刻，传感器会测量到一部分路标点，得到它们的观测数据
 
-机器人的位置：x
+**运动**：从 k-1 时刻到 k 时刻，小萝卡的位置 x 是如何变化的。
+$$
+x_k = f(x_{k-1}, u_k, w_k), \quad k =1,...,K
+$$
 
-都是随机变量，服从概率分布，
+ * u_k 是运动传感器的读数或者输入， ωk 为该过程中加入的噪声
 
-小萝卜是从上一个时刻运动到下一个时刻的
+**观测**：传感器在位置$x_k$处，探测到了路标$y_j$，产生了一个观测数据 $z_{k,j}$
+$$
+z_{k,j}=h(y_j, x_K, v_{k,j}), \quad (k,j) \in 某时刻观察到的路标
+$$
 
-运动方程：
+* v_k,j 是这次观测噪声
 
-路标（三维空间点）：y1.。。yn
 
-传感器在位置xk处，探测到了路标yj
 
-观测方程：$z_{k,j}=h()$
+**SLAM问题**：当知道运动测量的读数 u ，以及传感器的读数 z 时，如何求解定位问题(估计 x ) 和建图问题(估计 y )?  其实是一个**状态估计问题**：如何通过带有噪声的测量数据，估计内部的、隐藏着的状态变量？
 
-两个基本方程：
+状态估计问题的求解、与两个方程的具体形式，以及噪声服从哪种分布有关。按照
 
-​	运动方程：
-​	观测方程:
+## 2.4 实践：编程基础
 
-位置是三维的，如何表述
+### 2.4.1 安装Linux 操作系统
 
-观测是相机中的像素点，如何表述
+### 2.4.2  Hello SLAM
 
-已知u，z时，如何推断x，y
+```shell
+vim slambook2/ch2/helloSLAM.cpp
+```
 
-### slam 实践部分
+```c++
+# include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    cout << "Hello SLAM!" << endl;
+    return 0;
+}
+```
+
+编译（用g++编译器）
+
+```shell
+sudo apt-get install g++ # 安装g++
+g++ helloSLAM.cpp
+```
+
+运行程序：
+
+```shell
+./a.out
+```
+
+### 2.4.3 使用cmake
+
+理论上，任意一个C++程序都可以用 g++ 来编译。但当程序规模越来越大时，一个工程可能有许多个文件夹和源文件，这时输入的编译命令（g++）会越来越长。对于C++项目，使用一些工程管理工具会更加高效。
+
+在一个cmake 工程中，用 cmake 命令生成一个 makefile 文件，然后，用 make 命令根据这个makefile 文件的内容编译整个工程。
+
+先新建一个CMakeLists.txt 文件
+
+```shell
+vim slambook2/ch2/CMakeLists.txt
+```
+
+编辑内容：
+
+```cmake
+# 声明要求的cmake 最低版本
+cmake_minimum_required( VERSION 2.8)
+
+# 声明一个cmake 工程
+project (HelloSLAM)
+
+# 添加一个可执行程序
+# 语法：add_executable (程序名 源代码文件)
+add_executable( helloSLAM helloSLAM.cpp)
+```
+
+CMakeLists.txt 文件用于告诉 cmake 要对这个目录下的文件做什么事情。
+
+在当前目录下( slambook2/ch2/) ，调用cmake 对该工程进行cmake 编译:
+
+```shell
+cmake .
+```
+
+cmake 会输出一些编译信息，然后在当前目录下生成一些中间文件，其中最重要的就是MakeFile 。由于MakeFile 是自动生成的，我们不必修改它。现在，用make 命令对工程进行编译（实际调用了g++）:
+
+```shell
+make
+```
+
+执行生成的可执行程序：
+
+```shell
+./helloSLAM
+```
+
+不要中间文件，就把中间文件都放在一个中间目录中，编译成功后，删除中间目录即可。所以，更常见的编译cmake 工程的做法如下:
+
+```shell
+mkdir build	# 新建中间文件夹build
+cd build	# 进入build
+cmak ..		# 对上一层文件夹（代码文件夹）进行编译
+make
+```
+
+### 2.4.4 使用库
+
+在一个C++ 工程中，并不是所有代码都会编译成可执行文件。只有带有main 函数的文件才会生成可执行程序。而另一些代码，我们只想把它们打包成一个东西，供其他程序调用。这个东西叫作库(Library )。
+
+用 cmake 生成库，并且使用库中的函数：
+
+编辑如下 libHelloSLAM.cpp 文件：
+
+```shell
+vim slambook2/ch2/libHelloSLAM.cpp
+```
+
+```c++
+// 这是一个库文件
+# include <iostream>
+using namespace std;
+
+void printHello()
+{
+    cout << "Hello SLAM" << endl;
+}
+```
+
+这个库提供了一个 printHello 函数，调用此函数将输出一条信息。但是它没有main 函数，这意味着这个库中没有可执行文件。我们在CMakeLists.txt 里加上如下内容:
+
+```cmake
+add_library( hello libHelloSLAM.cpp)
+```
+
+这条命令告诉 cmake ，我们想把这个文件编译成一个叫作"hello" 的库。然后，和上面一样，使用 cmake 编译整个工程：
+
+```shell
+cd build
+cmake ..
+make
+```
+
+这时，在build 文件夹中就会生成一个 libhello.a 文件，这就是我们得到的库。在Linux 中，库文件分成静态库和共享库两种。静态库以.a 作为后缀名，共享库以 .so 结尾。所有库都是一些函数打包后的集合，差别在于**静态库每次被调用都会生成一个副本，而共享库则只有一个副本**，更省空间。如果想生成共享库而不是静态库，只需使用以下语句即可。
+
+```shell
+add_library( hello_shared SHARED libHelloSLAM.cpp)
+```
+
+此时得到的文件就是libhello_shared.so
+
+库文件是一个压缩包，里面有编译好的二进制函数。如果仅有.a 或 .so 库文件，那么我们并不知道里面的函数到底是什么，调用的形式又是什么样的。为了让别人(或者自己)使用这个库，我们需要提供一个头文件，说明这些库里都有些什么。因此，对于库的使用者，只要拿到了头文件和库文件，就可以调用这个库。下面编写libhel10 的头文件。
+
+```shell
+vim slambook2/ch2/libHelloSLAM.h
+```
+
+```c++
+# ifndef LIBHELLOSLAM_H_
+# define LIBHELLOSLAM_H_
+// 上面的宏定义是为了防止重复引用这个头文件而引起的重定义错误
+
+// 打印一句 Hello 的函数
+void printHello();
+
+# endif
+```
+
+这样，根据这个文件和我们刚才编译得到的库文件，就可以使用printHello 函数了。最后，我们写一个可执行程序来调用这个简单的函数:
+
+```shell
+vim slambook2/ch2/useHello.cpp
+```
+
+```cpp
+# include "libHelloSLAM.h"
+
+// 使用libHelloSLAM.h 中的printHello() 函数
+int main(int argc, char **argv)
+{
+    printHello();
+    return 0;
+}
+```
+
+然后，在CMakeLists.txt 中添加一个可执行程序的生成命令，链接到刚才使用的库上:
+
+```cmake
+add_executable( useHello useHello.cpp)
+target_link_libraries( useHello hello_shared)
+```
+
+通过这两行语句， useHello 程序就能顺利使用hello_shared 库中的代码了。这个小例子演示了如何生成并调用一个库。请注意，对于他人提供的库，我们也可用同样的方式对它们进行调用，整合到自己的程序中。
+
+### 2.4.5 使用IDE
+
+
 
 # 第三讲 三维空间刚体运动
+
+## 3.1 旋转矩阵
+
+### 3.1.1 点、向量和坐标系
+
+点：空间中的基本元素，没有长度，没有体积；
+
+向量：两个点连起来，可以看成从某点指向另一点的一个箭头，向量固定，而其坐标在不同坐标系下坐标不同。
 
 向量的坐标由坐标系确定，坐标系由3个正交的基定义
 $$
@@ -93,62 +279,69 @@ $$
 \left[ \begin{array}{c} a_1 \\ a_2 \\ a_3 \end{array} \right] =
 a_1e_1 + a_2e_2 + a_3e_3
 $$
-向量的坐标是a1,a2,a3
+向量$\vec{a}$ 在这组基下的坐标是$(a1,a2,a3)^T$ 
 
-向量的运算由坐标运算来表达
+向量的运算由坐标运算来表达，对于 $a, b \in \R^3$(三维实数集)
 
-加减法：$a\pm b = \sum\limits_{i}(a_i \pm b_i)$
+* **加减法**：$a\pm b = \sum\limits_{i}(a_i \pm b_i)$
 
-内积：$ a\cdot d = a^T b = \sum\limits_{i=1}^3a_ib_i=|\vec{a}||\vec{b}|cos(a,b)$
+* **内积**：$ a\cdot d = a^T b = \sum\limits_{i=1}^3a_ib_i=|\vec{a}||\vec{b}|cos\langle a,b \rangle$
 
-外积:
-$$
-\vec{a}\times \vec{b} = 
-\left| \begin{matrix} 
-	\vec{i} & \vec{j} & \vec{k} \\
-	a_1 & a_2 & a_3 \\
-	b_1 & b_2 & b_3
-\end{matrix} \right| =
-\left| \begin{matrix}
-	a_2b_3 - a_3b_2 \\
-	a_3b_1 - a_1b_3 \\
-	a_1b_2 - a_2b_1
-\end{matrix} \right| =
+* **外积**:
+  $$
+  \vec{a}\times \vec{b} = 
+  \left| \begin{matrix} 
+  	\vec{i} & \vec{j} & \vec{k} \\
+  	a_1 & a_2 & a_3 \\
+  	b_1 & b_2 & b_3
+  \end{matrix} \right| =
+  \left| \begin{matrix}
+  	a_2b_3 - a_3b_2 \\
+  	a_3b_1 - a_1b_3 \\
+  	a_1b_2 - a_2b_1
+  \end{matrix} \right| =
+  
+  \left[ \begin{array}
+  	\\0 & -a_3 & a_2 \\
+  	a_3 & 0 & -a_1 \\
+  	-a_2 & a_1 & 0
+  \end{array} \right] \vec{b} \triangleq a\hat{} b
+  $$
+  a^是a的反对称矩阵，aT = -a。
+  外积的结果是一个向量，它的方向垂直于这两个向量，大小为$|a||b|sin\langle a,b \rangle$ ，是两个向量张成的四边形的有向面积。
 
-\left[ \begin{array}
-	\\0 & -a_3 & a_2 \\
-	a_3 & 0 & -a_1 \\
-	-a_2 & a_1 & 0
-\end{array} \right] \vec{b} \triangleq a\verb|^| b
-$$
-a^是反对称矩阵：aT = -a
+### 3.1.2 坐标系间的欧氏变换
 
 基本问题：坐标系之间是如何变化的？进而：如何计算同一个向量在不同坐标系里的坐标？
+
+相机坐标系坐标 和 世界坐标系坐标之间转换：先得到该点针对机器人坐标系的坐标值，再根据机器人位姿变换到世界坐标系中。这个变换关系用变换矩阵 T 来描述。
 
 在SLAM中：
 
 * 固定的世界坐标系和移动的机器人坐标
 * 机器人坐标系随着机器人运动而改变，每个时刻都有新的坐标系
 
-两个坐标系之间的变化由两个部分组成：
+两个坐标系之间的变化（刚体运动）由两个部分组成：
 
 * 原点间的平移（平移是一个向量）
 * 三个轴的旋转（旋转是一个矩阵）
 
-设某坐标系（e1, e2, e3）发生了一次旋转，变成了（e1', e2', e3'）
 
-对于某个固定的向量a（向量不随坐标系旋转），坐标关系:
+
+设某坐标系（e1, e2, e3）发生了一次**旋转**，变成了（e1', e2', e3'）
+
+对于某个固定的向量a（向量本身不随坐标系旋转），坐标关系:
 $$
 \left[ \begin{array}{ccc}
-	e_1 & e_2 & e_3 
+	e_1, \ e_2, \ e_3 
 \end{array} \right]
 \left[ \begin{array}{c} a_1 \\ a_2 \\ a_3 \end{array} \right] =
 \left[ \begin{array}{ccc}
-	e_1^\prime & e_2^\prime  & e_3^\prime  
+	e_1^\prime, \ e_2^\prime,\ e_3^\prime  
 \end{array} \right]
 \left[ \begin{array}{c} a_1^\prime  \\ a_2^\prime  \\ a_3^\prime  \end{array} \right]
 $$
-左乘 $\left[ \begin{array}{c} e^T_1\\ e^T_2\\ e^T_3 \end{array} \right]$ , 得：
+左乘 $\left[ \begin{array}{c} e^T_1\\ e^T_2\\ e^T_3 \end{array} \right]$ , 得：左边的系数就变成了单位矩阵
 $$
 \left[ \begin{array}{c} a_1 \\ a_2 \\ a_3 \end{array} \right] =
 \left[ \begin{array}{ccc}
@@ -158,14 +351,24 @@ $$
 \end{array}\right] 
 \left[ \begin{array}{c} a_1^\prime \\ a_2^\prime \\ a_3^\prime \end{array} \right] \triangleq R\vec{a^\prime}
 $$
-**R 是一个正交矩阵（逆=转置），R的行列式为+1**，称为**旋转矩阵**，则旋转矩阵的**集合**就是**特殊正交群**：$SO(n)= \{ R\in R^{n\times n}|RR^T=I,det(R)=1 \}$ ，n维空间中的旋转，n=3就是三维空间中的旋转
+R 由两组基之间的内积组成，刻画了前后同一个向量的坐标变换关系。只要旋转是一样的，这个矩阵就是一样的。可以说，矩阵R 描述了旋转本身。因此，称为旋转矩阵( Rotation Matrix )。同时，该矩阵各分量是两个坐标系基的内积，由于基向量的长度为1 ，所以实际上是各基向量夹角的余弦值。所以这个矩阵也叫方向余弦矩阵( Direction Cosin巳Matrix)。我们后文统一称它为旋转矩阵。
 
-旋转矩阵描述了两个坐标的变换关系（向量没变），比如
+**R 是一个正交矩阵（逆=转置），R的行列式为+1**，称为**旋转矩阵**，则旋转矩阵的**集合**就是**特殊正交群**：$SO(n)= \{ R\in \R^{n\times n}|RR^T=I,det(R)=1 \}$ ，n维空间中的旋转，n=3就是三维空间中的旋转。
+
+旋转矩阵描述了两个坐标的欧氏变换关系（向量没变），比如
 
 * $a_1 = R_{12} a_2$
 * 反之：$a_2 = R_{21} a_1$
 * 于是：$R_{21}=R_{12}^{-1}=R_{12}^T$
 * 进一步，三个坐标系亦有：$a_3=R_{32}a_2=R_{32}R_{21} a1=R_{31}a_1 $
+
+R12 是指 “把坐标系2 的向量变换到坐标系1” 中。由于向量乘在这个矩阵的右边，它的下标是从右读到左的。这也是本书的习惯写法。坐标变换很容易摘混，特别是存在多个坐标系的情况下。同理，如果我们要表达"从1 到2 的旋转矩阵"时，就写成R21 。
+
+关于平移t12 ， 它实际对应的是坐标系1 原点指向坐标系2 原点的向量，在坐标系1 下取的坐标，所以笔者建议读者把它记作"从1 到2 的向量"。但是反过来的 t21 ， 即从2 指向1 的向量在坐标系2 下的坐标，却并不等于-t 12 ， 而是和两个系的旋转还有关系①。
+
+所以，当初学者问 "我的坐标在哪里" 这样的问题时，我们需要清楚地说明这句话的含义。这里"我的坐标"实际上指从世界坐标系指向自己坐标系原点的向量，在世界坐标系下取到的坐标。对应到数学符号上，应该是 twc 的取值。同理，它也不是-tcw
+
+### 3.1.3 变换矩阵与齐次坐标
 
 旋转加上平移：$a'=Ra+t$, 两个坐标系的刚体运动可以由R，t 完全描述。
 
@@ -173,14 +376,14 @@ $$
 
 这时：$c = R_2(R_1a+t_1)+t_2$，叠加起来过于复杂
 
-把一次平移和一次旋转合成一个矩阵：
+把一次平移和一次旋转合成一个矩阵 T：
 $$
 \left[ \begin{array}{c} a^\prime \\ 1 \end{array} \right]=
 \left[ \begin{array}{cc} R & t \\ 0^T & 1 \end{array} \right]
 \left[ \begin{array}{c} a \\ 1 \end{array} \right] \triangleq
 T \left[ \begin{array}{c} a \\ 1 \end{array} \right]
 $$
-记 $\tilde{a}=\left[ \begin{array}{c} a \\1 \end{array} \right]$ ，这种用四个数表达三维向量的做法称为**齐次坐标**，引入齐次坐标后，旋转和平移可以放入同一个矩阵，称为变换矩阵。那么多次变换就可以写成：
+记 $\tilde{a}=\left[ \begin{array}{c} a \\1 \end{array} \right]$ ，这种在三维向量的末尾添加 1（四维向量）表达三维向量的做法称为**齐次坐标**，引入齐次坐标后，旋转和平移可以放入同一个矩阵，称为变换矩阵 T 。那么多次变换就可以写成：
 $$
 \tilde{b}=T_1 \tilde{a},\tilde{c}=T_2 \tilde{b} \Rightarrow \tilde{c}=T_2 T_1 \tilde{a}
 $$
@@ -200,11 +403,15 @@ $$
 
 相机轨迹画的是相机坐标系中心在世界坐标系的坐标
 
-### EIGEN
+## 3.2 EIGEN
 
-C++矩阵运算库，运行效率高
+C++线性代数库，运行效率高
 
-ubuntu 安装eigen `sudo apt-get install libeigen3-dev`
+ubuntu 安装eigen 
+
+```shell
+sudo apt-get install libeigen3-dev
+```
 
 只有头文件库：/usr/include/eigen3 没有库文件，不需要链接库，只要把头文件加进来就可以了
 
@@ -284,7 +491,7 @@ $$
   * 绕旋转之后的Y轴旋转，得到俯仰角pitch
   * 绕旋转之后的X轴旋转，得到滚转角roll
 
-万向锁（Gimbal Lock）：
+万向锁（Gimbal Lock）问题：
 
 * ZYX顺序中，若Pitch为正负90度，则第三次旋转和第一次绕同一个轴，使得系统丢失了一个自由度——存在奇异性问题（所以不常用其表达姿态，往往用于人机交互中）
 
@@ -388,38 +595,35 @@ $$
 
 * 四元数相比于角轴、欧拉角的优势：**紧凑、无奇异性**
 
-### EIGEN 几何模块
+## 3.6 实践：EIGEN 几何模块
 
 # 第四讲 李群与李代数
 
 本讲目标：
 
-	* 理解李群与李代数的概念，掌握SO(3)，SE(3)与对应李代数的表示方式。
-	* 理解李代数上的求导的方式和意义。
-	* 使用Sophus对李代数进行运算。
+> * 理解李群与李代数的概念，掌握SO(3)，SE(3)与对应李代数的表示方式。
+> * 理解李代数上的求导的方式和意义。
+> * 使用Sophus对李代数进行运算。
 
-上讲回顾：
-
-* 三维世界中刚体运动的描述：**旋转矩阵、旋转向量、欧拉角、四元数**等。
-* 除了**表示**位姿之外，还要对运动**估计**和**优化**。搞清楚目标函数关于运动的**导数**
-* 旋转矩阵自身带有约束（**正交且行列式为1**，非线性约束）。作为优化变量时，会引入额外的约束，使优化变得困难。
-* 李代数上可以变成**无约束**优化。
+在SLAM 中，除了表示，我们还要对它们进行估计和优化。因为在SLAM 中位姿是未知的，而我们需要解决形如"**什么样的相机位姿最符合当前观测数据"**这样的问题。一种典型的方式是把它构建成一个优化问题，求解最优的
+R， t ， 使得误差最小化。
+如前所言，旋转矩阵自身是带有约束的(正交且行列式为1，非线性约束 )。它们作为优化变量时，会引入额外的约束，使优化变得困难。通过李群一李代数间的转换关系，我们希望把位姿估计变成无约束的优化问题，简化求解方式
 
 ## 4.1 李群李代数基础
 
-三维旋转矩阵构成了**特殊正交群**
+三维旋转矩阵构成了**特殊正交群SO(3)**
 $$
-SO(n)= \{ R\in R^{n\times n}|RR^T=I,det(R)=1 \}
+SO(3)= \{ R\in R^{3\times 3}|RR^T=I,det(R)=1 \}
 $$
 
 
-三维变换矩阵构成了**特殊欧氏群**
+三维变换矩阵构成了**特殊欧氏群SE(3)**
 $$
 SE(3)=\left\{ T= \left[ \begin{array}{cc} R & t \\ 0^T & 1 \end{array} \right] \in R^{4\times 4}|R \in SO(3),t \in R^3 \right\}
 $$
 **群**(Group)：是一种**集合**加上一种**运算**的**代数结构**。
 
-记集合为A，运算为 · ，那么当运算满足以下性质时，称（A, · ）成群：
+记集合为A，运算记为 · ，那么当运算满足以下性质时，称（A, · ）成群：
 
 1. 封闭性：$\forall a_1,a_2 \in A,\quad a_1\cdot a_2 \in A$
 
@@ -788,15 +992,102 @@ $$
 
 ## 5.1 相机针孔模型
 
+### 5.1.3 双目相机模型
+
+针孔相机模型描述了单个相机的成像模型。然而，仅根据一个像素，我们无法确定这个空间点的具体位置，深度不知道。
+
+双目相机通过同步采集左右相机的图像，计算图像间视差，以便估计每一个像素的深度。
+
+两个镜头水平放置，两个光圈中心都位于x轴上，两者之间的距离称为双目相机的**基线**。
+
+视差d本身的计算：需要知道左眼图像的某个像素出现在右眼图像的哪个位置（即对应关系）。当我们想计算每个像素的深度时，其计算量与精度都将成为问题，而且只有在图像纹理变化丰富的地方才能计算视差。由于计算量的原因，双目深度估计仍需要使用GPU 或FPGA 来实时计算。这将在第13 讲中介绍。
+
+
+
 ## 5.2 图像
 
 图像在计算机中以矩阵形式存储
 
 ## 5.3 实践：基本图像处理
 
+### 5.3.1 OpenCV的基本使用方法
+
+OpenCV 提供了大量的开源图像算法，是计算机视觉中使用极广的图像处理算法库。
+
+#### 安装OpenCV
+
+在Ubunt 系统下，有从**源代码安装**和**只安装库文件**两种方式可以选择
+
+1. 从源代码安装，是指从OpenCV网站下载所有的OpenCV 源代码，并在机器上编译安装，以便使用。好处是可以选择的版本比较丰富，而且能看到源代码，不过需要花费一些编译时间。
+2. 只安装库文件，是指通过Ubuntu 安装由Ubuntu 社区人员已经编译好的库文件，这样就无须重新编译一遍。
+
+从http://opencv.org/downloads.html 下载，选择OpenCV for Linux 版本即可。你会获得一个像opencv-3. 1. 0.zip 这样的压缩包。将它解压到任意目录下，我们发现OpenCV 也是一个cmake 工程。
+在编译之前，先来安装OpenCV 的依赖项：
+
+```shell
+sudo apt-get install build-essential libgtk2.0-dev libvtk5-dev libjpeg-dev libtiff4-dev libjasper-dev libopenexr-dev libtbb-dev
+```
+
+#### 操作OpenCV图像
 
 
-## 5.4 实践：点云拼接
+
+## 5.4 实践：3D视觉
+
+### 5.4.1 双目视觉
+
+们从双目视觉的左右图像出发，计算图像对应的视差图，然后计算各像素在相机坐标系下的坐标，它们将构成点云。在第5 讲代码目录的stereo 文件夹中，我们准备了双目视觉的图像，如图5-9 所示。下面的代码演示了计算视差图和点云部分:
+
+```shell
+vim slambook/ch5/stereoVision/stereoVison.cpp
+```
+
+```c++
+int main (int argc, char **argv)
+{
+    // 内参
+    double fx = 718.856, fy = 718.856, cx = 607.1928, cy = 185.2157;
+    //基线
+    double b = 0.573;
+    
+    // 读取图像
+    cv::Mat left = cv::imread(left_file, 0);
+    cv::Mat right = cv::imread(right_file, 0);
+    cv::Ptr<cv::StereoSGBM> sgbm = cv::StereoSGBM::create(0, 96, 9, 8 * 9 * 9, 32*9*9, 1, 63, 10, 100, 32);//神奇的参数
+    cv::Mat disparity_sgbm, disparity;
+    sgbm->compute(left, right, disparity_sgbm);
+    disparity_sgbm.convertTo(disparity, CV_32F, 1.0/16.0f);
+    
+    // 生成点云
+    vector<Vector4d, Eigen::aligned_allocator<Vector4d>> pointcloud;
+    
+    // 如果你的机器慢，把后面的v++ 和 u++ 改成 v+=2, u+=2
+    for (int v = 0; v < left.rows; v++)
+        for (int u = 0; u < left.cols; u++)
+        {
+            if (disparity.at<float>(v, u) <= 10.0 || disparity.at<float>(v, u) >= 96.0)
+                continue;
+            Vector4d point(0, 0, 0, left.at<uchar>(v, u) / 255.0);	//前三维为xyz，第四维为颜色
+            
+            // 根据双目模型计算point的位置
+            double x = (u - cx) / fx;
+            double y = (v - cy) / fy;
+            double depth = fx * b / (disparity.at<float>(v,u));
+            point[0] = x * depth;
+            point[1] = y * depth;
+            point[2] = depth;
+            
+            pointcloud.push_back(point);
+        }
+	cv::imshow("disparity", disparity / 96.0);
+    cv::waitKey(0);
+    // 画出点云
+    showPointCloud(pointcloud);
+    return 0;
+}
+```
+
+### 点云拼接
 
 
 
@@ -912,5 +1203,26 @@ $$
 $$
 min\ J(x)=\sum_k e_{v,k}^T R_k^{-1}e_{v,k}+\sum_k \sum_j e_{y,k,j}^T Q_{k,j}^{-1} e_{y,k,j}
 $$
+
+
+
+# 第七讲 特征点法的视觉里程计
+
+# 第八讲 直接法的视觉里程计
+
+# 第九讲 后端优化
+
+
+
+# 第十讲 位姿图
+
+# 第十一讲 回环检测
+
+# 第十二讲 地图构建
+
+# 第十三讲 工程实践
+
+# 第十四讲 开源SLAM方案
+
 
 
