@@ -1030,6 +1030,13 @@ sudo apt-get install build-essential libgtk2.0-dev libvtk5-dev libjpeg-dev libti
 
 #### 操作OpenCV图像
 
+```c++
+# include <iostream>
+
+```
+
+
+
 
 
 ## 5.4 实践：3D视觉
